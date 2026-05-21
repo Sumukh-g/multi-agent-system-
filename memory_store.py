@@ -58,6 +58,34 @@ class MemoryStore:
                 CREATE INDEX IF NOT EXISTS idx_missions_created_at ON missions(created_at)
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS chat_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    role TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    mission_id INTEGER,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (session_id) REFERENCES chat_sessions (id)
+                )
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_chat_sessions_created_at ON chat_sessions(created_at)"
+            )
             conn.commit()
 
     def save_mission(self, objective: str, status: str, final_report: str) -> int:
@@ -124,3 +152,50 @@ class MemoryStore:
             "success_rate": round(ratio, 3),
             "agent_runs": runs,
         }
+
+    def create_chat_session(self, title: str = "New chat") -> int:
+        with self._conn() as conn:
+            cur = conn.execute(
+                "INSERT INTO chat_sessions (title) VALUES (?)",
+                (title[:200],),
+            )
+            conn.commit()
+            return int(cur.lastrowid)
+
+    def add_chat_message(
+        self,
+        session_id: int,
+        role: str,
+        content: str,
+        mission_id: int | None = None,
+    ) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO chat_messages (session_id, role, content, mission_id) VALUES (?, ?, ?, ?)",
+                (session_id, role, content, mission_id),
+            )
+            conn.commit()
+
+    def list_chat_sessions(self, limit: int = 50) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT id, title, created_at FROM chat_sessions ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_chat_messages(self, session_id: int) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT id, role, content, mission_id, created_at FROM chat_messages WHERE session_id=? ORDER BY id",
+                (session_id,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def update_chat_session_title(self, session_id: int, title: str) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                "UPDATE chat_sessions SET title=? WHERE id=?",
+                (title[:200], session_id),
+            )
+            conn.commit()

@@ -26,7 +26,17 @@ This codebase is no longer a small demo scaffold. It includes:
 
 ```bash
 pip install -r requirements.txt
-export GROQ_API_KEYS="gsk_1,gsk_2,gsk_3,gsk_4,gsk_5,gsk_6"
+```
+
+Create a `.env` file in the project root (or copy from `.env.example`):
+
+```
+GROQ_API_KEYS=your_key_1,your_key_2,your_key_3
+```
+
+Get API keys at [console.groq.com](https://console.groq.com). Then:
+
+```bash
 streamlit run app.py
 ```
 
