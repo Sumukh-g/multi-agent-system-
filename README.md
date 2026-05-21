@@ -1,48 +1,39 @@
-# GodBot: Hyper-Advanced Multi-Agent Intelligence System
+# multi-agent-system
 
-GodBot is a local-first, performance-oriented, multi-agent architecture designed around a centralized "God Brain" orchestration layer and adaptive Groq key management.
+Local Streamlit app that runs several Groq-backed agents on a shared mission. One orchestrator coordinates agents, rotates API keys on rate limits, and stores mission output in SQLite.
 
-## Why this is now significantly more advanced
-
-This codebase is no longer a small demo scaffold. It includes:
-
-- **Adaptive Key Orchestration** with health scoring, latency tracking, exponential cooldown, and failover retries.
-- **High-performance Tooling** with cached web search, lead extraction, safe command execution, artifact + JSON persistence.
-- **Advanced Agent Runtime** with structured ReAct planning, tool routing, fallback synthesis, and self-critique post-processing.
-- **God Brain Orchestrator** supporting parallel or sequential execution modes, output synthesis, and artifact bundling.
-- **Persistent Mission Intelligence** (SQLite) with mission search, run history, and operational metrics.
-- **Powerful Streamlit Command Center** with mission templates, parallelism controls, agent-level config, memory search, artifact explorer, and KPI dashboard.
-
-## Architecture
-
-- `key_manager.py` — adaptive centralized Groq key carousel.
-- `tools.py` — web search/cache, lead extraction, command execution, artifact I/O.
-- `agents.py` — high-capability ReAct agents (Seer/Hunter/Scribe).
-- `orchestrator.py` — God Brain execution coordinator.
-- `memory_store.py` — mission/run persistence and analytics.
-- `app.py` — multi-tab Streamlit operations dashboard.
-
-## Quickstart
+## Setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root (or copy from `.env.example`):
+Copy `.env.example` to `.env` and set your keys:
 
 ```
-GROQ_API_KEYS=your_key_1,your_key_2,your_key_3
+GROQ_API_KEYS=key_one,key_two
 ```
 
-Get API keys at [console.groq.com](https://console.groq.com). Then:
+Keys are available from [console.groq.com](https://console.groq.com). You only need one key; extra keys are used when one hits a rate limit.
 
 ```bash
 streamlit run app.py
 ```
 
-## Safety + Performance Notes
+## Layout
 
-- Dangerous shell patterns are blocked in `execute_command`.
-- Command execution defaults to simulation unless explicitly disabled.
-- Web results are cached to reduce duplicate search overhead.
-- Key manager tracks per-key reliability/latency for better runtime decisions.
+| File | Role |
+|------|------|
+| `app.py` | Streamlit UI |
+| `orchestrator.py` | Runs agents in parallel or sequence, merges output |
+| `agents.py` | ReAct-style agents (Seer, Hunter, Scribe) |
+| `key_manager.py` | Groq client pool and failover |
+| `tools.py` | Search, file export, safe command runner |
+| `memory_store.py` | Missions, chat sessions, agent runs |
+
+## Notes
+
+- Shell commands in `execute_command` are simulated by default.
+- Dangerous command patterns are blocked.
+- Web search results are cached for two minutes.
+- Exports (txt, docx, pdf) are written under `artifacts/`.

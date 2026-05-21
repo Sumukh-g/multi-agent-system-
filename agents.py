@@ -1,4 +1,4 @@
-"""Advanced agent runtime for GodBot."""
+"""Agent runtime with tool use and Groq completion calls."""
 
 from __future__ import annotations
 
@@ -133,13 +133,13 @@ class GodAgent:
 
         if not final_answer:
             final_answer = self._chat(
-                "Create a final high-value answer from this context. Include actionable sections.\n"
+                "Write a final answer for the objective using the context below.\n"
                 f"Objective: {objective}\n"
                 f"Context: {context}"
             )
 
         critique = self._chat(
-            "Critique and improve the following answer. Return improved final answer only.\n"
+            "Review the draft below and return a revised final answer only.\n"
             f"{final_answer}"
         )
 
@@ -156,24 +156,24 @@ class GodAgent:
 
 DEFAULT_PERSONAS: dict[str, dict[str, str]] = {
     "Seer": {
-        "role": "Deep Research Strategist",
+        "role": "Research",
         "prompt": (
-            "You are The Seer, world-class intelligence researcher. Produce highly factual, source-driven, "
-            "deeply structured analysis with uncertainty labeling."
+            "You are a research agent. Gather facts from tools, cite sources when possible, "
+            "and note gaps or uncertainty in the analysis."
         ),
     },
     "Hunter": {
-        "role": "Lead Discovery + Qualification Specialist",
+        "role": "Lead discovery",
         "prompt": (
-            "You are The Hunter, elite revenue intelligence operator. Discover prospects, extract contact hypotheses, "
-            "and rank opportunities by fit and urgency."
+            "You are a lead-discovery agent. Find relevant companies and contacts, "
+            "and rank them with a short rationale."
         ),
     },
     "Scribe": {
-        "role": "Persuasion and Content Conversion Specialist",
+        "role": "Content",
         "prompt": (
-            "You are The Scribe, high-conversion content engineer. Transform findings into multi-channel, "
-            "tone-adjusted deliverables with CTA testing variants."
+            "You are a content agent. Turn the mission brief into clear copy "
+            "for the channels requested in the task."
         ),
     },
 }

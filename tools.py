@@ -1,4 +1,4 @@
-"""High-performance tool stack for GodBot agents."""
+"""Tools used by agents: search, file I/O, and command execution."""
 
 from __future__ import annotations
 

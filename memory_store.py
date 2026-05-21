@@ -1,4 +1,4 @@
-"""Persistent mission memory with analytics endpoints."""
+"""SQLite storage for missions, agent runs, and chat sessions."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Any
 
 @dataclass
 class MemoryStore:
-    db_path: Path = Path("godbot_memory.db")
+    db_path: Path = Path("missions.db")
 
     def __post_init__(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

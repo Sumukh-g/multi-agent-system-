@@ -1,4 +1,4 @@
-"""High-performance Groq key orchestration with adaptive failover and metrics."""
+"""Groq API key rotation and rate-limit failover."""
 
 from __future__ import annotations
 

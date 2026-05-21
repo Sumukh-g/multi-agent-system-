@@ -1,4 +1,4 @@
-"""GodBot command center: chat-first UI, file export, and mission control."""
+"""Streamlit UI for the multi-agent orchestrator."""
 
 from __future__ import annotations
 
@@ -21,47 +21,7 @@ DEFAULT_MODEL_SMART = "llama-3.3-70b-versatile"
 DEFAULT_MODEL_FAST = "llama-3.1-8b-instant"
 MODEL_CHOICES = [DEFAULT_MODEL_SMART, DEFAULT_MODEL_FAST]
 
-st.set_page_config(
-    page_title="GodBot — Multi-Agent Control",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-# Custom CSS: clean, chat-style UI
-st.markdown("""
-<style>
-    /* Main container */
-    .stApp { max-width: 1200px; margin: 0 auto; }
-    /* Chat container */
-    .chat-container { padding: 1rem 0; }
-    .message { margin-bottom: 1.25rem; clear: both; }
-    .message-user { margin-left: 15%; }
-    .message-assistant { margin-right: 15%; }
-    .bubble { padding: 0.9rem 1.2rem; border-radius: 14px; line-height: 1.5; }
-    .bubble-user {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-        color: #fff; box-shadow: 0 2px 8px rgba(13,148,136,0.3);
-    }
-    .bubble-assistant {
-        background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .bubble-assistant .stMarkdown { color: #e2e8f0; }
-    .message-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
-    .export-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; }
-    .export-row .stButton button { font-size: 0.8rem; padding: 0.35rem 0.6rem; }
-    /* Input area */
-    .input-area { background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid #334155; }
-    /* Sidebar */
-    [data-testid="stSidebar"] { background: #0f172a; }
-    [data-testid="stSidebar"] .stMarkdown { color: #e2e8f0; }
-    /* Headers */
-    h1 { font-size: 1.6rem !important; font-weight: 700 !important; }
-    h2, h3 { color: #e2e8f0 !important; }
-    /* Metrics cards */
-    [data-testid="stMetricValue"] { font-weight: 600; }
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Multi-agent console", layout="wide")
 
 # Session state
 if "chat_messages" not in st.session_state:
@@ -116,43 +76,42 @@ def render_chat_message(msg: dict, index: int) -> None:
     content = msg["content"]
     key_states = msg.get("key_states")
     streamlit_role = "user" if role == "user" else "assistant"
-    with st.chat_message(streamlit_role, avatar="🧑" if role == "user" else "⚡"):
+    with st.chat_message(streamlit_role):
         st.markdown(content)
         if role == "assistant" and content.strip():
             c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
             with c1:
-                if st.button("📄 TXT", key=f"txt_{index}"):
+                if st.button("Save as TXT", key=f"txt_{index}"):
                     try:
-                        p = export_txt(f"godbot_reply_{index}.txt", content)
-                        st.success(f"Saved: {p.name}")
+                        p = export_txt(f"response_{index}.txt", content)
+                        st.success(f"Wrote {p.name}")
                     except Exception as e:
                         st.error(str(e))
             with c2:
-                if st.button("📝 Word", key=f"docx_{index}"):
+                if st.button("Save as Word", key=f"docx_{index}"):
                     try:
-                        p = export_docx(f"godbot_reply_{index}.docx", content)
-                        st.success(f"Saved: {p.name}")
+                        p = export_docx(f"response_{index}.docx", content)
+                        st.success(f"Wrote {p.name}")
                     except Exception as e:
                         st.error(str(e))
             with c3:
-                if st.button("📕 PDF", key=f"pdf_{index}"):
+                if st.button("Save as PDF", key=f"pdf_{index}"):
                     try:
-                        p = export_pdf(f"godbot_reply_{index}.pdf", content)
-                        st.success(f"Saved: {p.name}")
+                        p = export_pdf(f"response_{index}.pdf", content)
+                        st.success(f"Wrote {p.name}")
                     except Exception as e:
                         st.error(str(e))
             with c4:
                 if key_states is not None and len(key_states) > 0:
-                    with st.expander("Key health"):
+                    with st.expander("API key stats"):
                         st.dataframe(key_states, use_container_width=True, hide_index=True)
 
 
 # ----- Sidebar -----
 with st.sidebar:
-    st.header("⚙️ Settings")
-    st.caption("Runtime & agents")
+    st.header("Settings")
 
-    if st.button("➕ New chat", use_container_width=True):
+    if st.button("New conversation", use_container_width=True):
         st.session_state.chat_messages = []
         st.session_state.current_session_id = None
         st.session_state.terminal_log = []
@@ -163,12 +122,12 @@ with st.sidebar:
     past = memory.list_chat_sessions(20)
     if past:
         chosen = st.selectbox(
-            "Past chats",
-            options=[f"#{s['id']} — {s['title']}" for s in past],
+            "Previous conversations",
+            options=[f"#{s['id']} - {s['title']}" for s in past],
             key="past_chats",
         )
-        if st.button("Load selected chat", use_container_width=True) and chosen:
-            sid = int(chosen.split("—")[0].replace("#", "").strip())
+        if st.button("Open conversation", use_container_width=True) and chosen:
+            sid = int(chosen.split(" - ", 1)[0].replace("#", "").strip())
             st.session_state.current_session_id = sid
             st.session_state.chat_messages = []
             for m in memory.get_chat_messages(sid):
@@ -205,31 +164,26 @@ with st.sidebar:
                 height=100,
             )
 
-# ----- Main: title + chat + input -----
-st.title("GodBot")
-st.caption("Multi-agent mission control · Chat history · Export to TXT, Word, or PDF")
+st.title("Multi-agent console")
 
-# Chat history
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for i, msg in enumerate(st.session_state.chat_messages):
     render_chat_message(msg, i)
-st.markdown("</div>", unsafe_allow_html=True)
 
 # Input area
 st.markdown("---")
 template = st.selectbox(
-    "Quick template",
-    ["Custom", "Lead Gen Blitz", "Deep Research Dossier", "Content Engine Batch"],
+    "Template",
+    ["Custom", "Lead generation", "Research brief", "Content draft"],
     key="template",
 )
 template_text = {
-    "Lead Gen Blitz": "Find 30 high-fit B2B leads in AI infra, infer contacts, rank by intent, create outreach sequence.",
-    "Deep Research Dossier": "Research the top 10 trends, competitors, and strategic opportunities in autonomous agent tooling.",
-    "Content Engine Batch": "Create 20 tweets, 5 LinkedIn posts, and a long-form blog from latest AI agent market signals.",
+    "Lead generation": "Find B2B leads in AI infrastructure, list contacts where possible, and rank by fit.",
+    "Research brief": "Summarize trends and competitors in autonomous agent tooling.",
+    "Content draft": "Draft social posts and a short blog outline from recent agent-tooling news.",
 }.get(template, "")
 
-mission = st.text_area("Mission / question", value=template_text, height=120, placeholder="Describe what you want GodBot to do…")
-deploy = st.button("Deploy mission", type="primary", use_container_width=True)
+mission = st.text_area("Task", value=template_text, height=120, placeholder="What should the agents work on?")
+deploy = st.button("Run", type="primary", use_container_width=True)
 
 if deploy:
     if not mission.strip():
@@ -275,24 +229,24 @@ if deploy:
 
 # Tabs: Terminal, Artifacts, Memory, Metrics
 st.divider()
-tab_term, tab_art, tab_mem, tab_met = st.tabs(["Live terminal", "Artifacts", "Memory", "Metrics"])
+tab_term, tab_art, tab_mem, tab_met = st.tabs(["Log", "Files", "History", "Stats"])
 
 with tab_term:
     lines = st.session_state.terminal_log[-500:]
     if not lines:
-        st.info("No terminal output yet. Run a mission to see agent logs.")
+        st.info("No log output yet.")
     else:
         html = "<br>".join([f"<span style='color:{c};font-family:monospace;font-size:0.9em'>{m}</span>" for m, c in lines])
         st.markdown(
             f"<div style='background:#0e1117;border:1px solid #2a2f3a;padding:12px;border-radius:8px;min-height:200px;max-height:400px;overflow-y:auto'>{html}</div>",
             unsafe_allow_html=True,
         )
-    if st.button("Clear terminal"):
+    if st.button("Clear log"):
         st.session_state.terminal_log = []
         st.rerun()
 
 with tab_art:
-    st.subheader("Generated files")
+    st.subheader("Output files")
     files = sorted(Path("artifacts").glob("*"), reverse=True) if Path("artifacts").exists() else []
     if not files:
         st.info("No artifacts yet.")
@@ -311,7 +265,7 @@ with tab_art:
                 )
 
 with tab_mem:
-    st.subheader("Mission history")
+    st.subheader("Past missions")
     q = st.text_input("Search", key="mem_search")
     data = memory.search_missions(q, 50) if q else memory.list_recent_missions(50)
     st.dataframe(data, use_container_width=True, hide_index=True)

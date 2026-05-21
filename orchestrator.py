@@ -1,4 +1,4 @@
-"""God Brain orchestrator: parallel execution, synthesis, and persistence."""
+"""Mission orchestrator: parallel or sequential agent runs and report merge."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ class GodOrchestrator:
                 f"{out['result']}\n"
             )
         base = "\n\n".join(sections)
-        return f"# GODBOT MASTER REPORT\n\nObjective: {objective}\n\n{base}"
+        return f"# Mission report\n\nObjective: {objective}\n\n{base}"
 
     def run_mission(self, cfg: MissionConfig) -> dict[str, Any]:
         self.logger(f"Mission accepted: {cfg.objective}", "thought")
